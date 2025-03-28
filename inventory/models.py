@@ -12,6 +12,7 @@ class Item(models.Model):
     name = models.CharField(max_length=200)
     price = models.PositiveIntegerField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    add_ons = models.ManyToManyField("AddOn", related_name="items")
     available = models.BooleanField(default=True)
 
     def __str__(self):

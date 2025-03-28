@@ -12,9 +12,17 @@ class ItemView(APIView):
             if category_id:
                 Category.objects.get(id=category_id)
 
-                items = Item.objects.filter(category=category_id)
+                items = (
+                    Item.objects.select_related("category")
+                    .prefetch_related("add_ons")
+                    .filter(category=category_id)
+                )
             else:
-                items = Item.objects.all()
+                items = (
+                    Item.objects.select_related("category")
+                    .prefetch_related("add_ons")
+                    .all()
+                )
             serializer = ItemSerializer(items, many=True)
             return Response(serializer.data, status=HTTP_200_OK)
 

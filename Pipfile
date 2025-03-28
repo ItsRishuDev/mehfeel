@@ -17,6 +17,7 @@ reportlab = "*"
 python-dotenv = "*"
 psycopg2 = "*"
 djangorestframework = "*"
+drf-yasg = "*"
 
 [dev-packages]
 
