@@ -12,11 +12,11 @@ class Invoice(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return f"Invoice {self.id} - {self.customer_name}"
+        return f"Invoice {self.invoice_id} - {self.customer_name}"
 
 
 class InvoiceItem(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name="items")
     item = models.ForeignKey(Item, on_delete=models.SET_NULL, null=True)
     quantity = models.PositiveIntegerField(default=1)
     item_name_at_purchase = models.CharField(max_length=200, blank=True)
