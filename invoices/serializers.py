@@ -2,24 +2,30 @@ from datetime import datetime
 from rest_framework import serializers
 from invoices.models import Invoice, InvoiceItem, InvoiceItemAddOn
 from inventory.models import Item, AddOn
+from inventory.serializers import ItemSerializer
 
 
 class InvoiceItemAddOnDetailSerializer(serializers.ModelSerializer):
+    addon_name = serializers.CharField(source="addon_name_at_purchase")
+    addon_price = serializers.CharField(source="addon_price_at_purchase")
+
     class Meta:
         model = InvoiceItemAddOn
-        fields = "__all__"
+        fields = ["id", "addon_name", "addon_price", "quantity"]
 
 
 class InvoiceItemDetailSerializer(serializers.ModelSerializer):
-    add_on = InvoiceItemAddOnDetailSerializer(many=True)
+    item_name = serializers.CharField(source="item_name_at_purchase")
+    item_price = serializers.CharField(source="item_price_at_purchase")
+    item_addons = InvoiceItemAddOnDetailSerializer(many=True)
 
     class Meta:
         model = InvoiceItem
-        fields = "__all__"
+        fields = ["id", "item_name", "item_price", "quantity", "item_addons"]
 
 
 class InvoiceDetailSerializer(serializers.ModelSerializer):
-    items = InvoiceItemDetailSerializer(many=True)
+    invoice_items = InvoiceItemDetailSerializer(many=True)
 
     class Meta:
         model = Invoice
@@ -29,13 +35,14 @@ class InvoiceDetailSerializer(serializers.ModelSerializer):
             "invoice_date",
             "invoice_url",
             "total_amount",
-            "items",
+            "invoice_items",
         ]
+
 
 class AllInvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
-        fields = '__all__'
+        fields = "__all__"
 
 
 class BaseItemSerializer(serializers.Serializer):

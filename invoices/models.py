@@ -14,9 +14,17 @@ class Invoice(models.Model):
     def __str__(self):
         return f"Invoice {self.invoice_id} - {self.customer_name}"
 
+    def get_file_name(self):
+        file_name = ""
+        file_name += self.customer_name if self.customer_name else self.invoice_id
+        date_str = self.invoice_date.strftime("%Y_%m_%d__%H:%M:%S")
+        file_name += f"_{date_str}.pdf"
+        return file_name
 
 class InvoiceItem(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name="items")
+    invoice = models.ForeignKey(
+        Invoice, on_delete=models.CASCADE, related_name="items"
+    )
     item = models.ForeignKey(Item, on_delete=models.SET_NULL, null=True)
     quantity = models.PositiveIntegerField(default=1)
     item_name_at_purchase = models.CharField(max_length=200, blank=True)
@@ -37,7 +45,9 @@ class InvoiceItem(models.Model):
 
 
 class InvoiceItemAddOn(models.Model):
-    invoice_item = models.ForeignKey(InvoiceItem, on_delete=models.CASCADE)
+    invoice_item = models.ForeignKey(
+        InvoiceItem, on_delete=models.CASCADE, related_name="item_addons"
+    )
     add_on = models.ForeignKey(AddOn, on_delete=models.SET_NULL, null=True)
     quantity = models.PositiveIntegerField(default=1)
     addon_name_at_purchase = models.CharField(max_length=200, blank=True)
