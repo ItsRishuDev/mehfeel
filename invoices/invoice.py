@@ -2,13 +2,16 @@ import io
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle
+from reportlab.platypus import Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
 
 
 def generate_invoice(invoice_data):
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
+
+    styles = getSampleStyleSheet()
 
     # Add Invoice Header
     c.setFont("Helvetica-Bold", 26)
@@ -32,15 +35,12 @@ def generate_invoice(invoice_data):
     c.drawRightString(550, height - 130, invoice_data.invoice_date.strftime("%d/%m/%Y"))
 
     # Invoice Number
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(50, height - 160, f"INVOICE ID - {invoice_data.invoice_id}")
+    c.setFont("Helvetica", 12)
+    c.drawString(50, height - 160, f"Invoice ID - {invoice_data.invoice_id}")
 
     # Table Data
-    data = [["S.No", "Item", "Quantity", "Unit Price", "Total"]]
+    data = [["S.No", "Item", "Quantity", "Unit Price (₹)", "Total (₹)"]]
 
-    # Invoice Data
-    invoice_date = invoice_data.invoice_date.strftime("%d-%m-%Y")
-    total_price = invoice_data.total_amount
     count = 0
     for invoice_item in invoice_data.items.all():
         count += 1
@@ -49,8 +49,8 @@ def generate_invoice(invoice_data):
                 count,
                 invoice_item.item_name_at_purchase,
                 invoice_item.quantity,
-                invoice_item.item_price_at_purchase,
-                invoice_item.quantity * invoice_item.item_price_at_purchase,
+                f"₹ {invoice_item.item_price_at_purchase:.2f}",
+                f"₹ {invoice_item.quantity * invoice_item.item_price_at_purchase:.2f}",
             ]
         )
         for addon_item in invoice_item.item_addons.all():
@@ -60,20 +60,22 @@ def generate_invoice(invoice_data):
                     count,
                     addon_item.addon_name_at_purchase,
                     addon_item.quantity,
-                    addon_item.addon_price_at_purchase,
-                    addon_item.quantity * addon_item.addon_price_at_purchase,
+                    f"₹ {addon_item.addon_price_at_purchase:.2f}",
+                    f"₹ {addon_item.quantity * addon_item.addon_price_at_purchase:.2f}",
                 ]
             )
 
-    table = Table(data, colWidths=[50, 200, 80, 80, 80])
+    table = Table(data, colWidths=[50, 220, 80, 80, 80])
     table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f2f2f2")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-                ("ALIGN", (0, 0), (-1, -1), "RIGHT"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("GRID", (0, 0), (-1, -1), 1, colors.black),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
             ]
         )
     )
@@ -83,11 +85,14 @@ def generate_invoice(invoice_data):
     table.drawOn(c, 50, height - table_height)
 
     # Payment Summary
-    c.setFont("Helvetica-Bold", 12)
-    c.drawRightString(400, height - (table_height + 40), f"Subtotal: \u20B9 {total_price}")
-    c.drawRightString(400, height - (table_height + 60), "Remaining: \u20B9 0")
-    c.setFont("Helvetica-Bold", 14)
-    c.drawRightString(400, height - (table_height + 80), f"Total:  \u20B9 {total_price}")
+    total_price = invoice_data.total_amount
+    c.setFont("Courier", 12)
+    c.drawRightString(
+        500, height - (table_height + 40), f"Subtotal: ₹ {total_price:.2f}"
+    )
+    c.drawRightString(500, height - (table_height + 60), "Remaining: ₹ 0.00")
+    c.setFont("Courier", 14)
+    c.drawRightString(500, height - (table_height + 80), f"Total: ₹ {total_price:.2f}")
 
     # Payment Details
     c.setFont("Helvetica-Bold", 12)
@@ -100,7 +105,7 @@ def generate_invoice(invoice_data):
 
     # Thank You Note
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, height - (table_height + 230), "THANK YOU!")
+    c.drawString(50, height - (table_height + 230), "THANK YOU FOR YOUR BUSINESS!")
 
     c.save()
     buffer.seek(0)
